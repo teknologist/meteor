@@ -39,8 +39,6 @@ Blaze.Template = function (viewName, renderFunction) {
     rendered: [],
     destroyed: []
   };
-
-  this._subscriptionHandles = new ReactiveVar([]);
 };
 var Template = Blaze.Template;
 
@@ -265,6 +263,8 @@ Blaze.TemplateInstance = function (view) {
    * @type {DOMNode}
    */
   this.lastNode = null;
+
+  this._subscriptionHandles = new ReactiveVar([]);
 };
 
 /**
@@ -320,7 +320,7 @@ Blaze.TemplateInstance.prototype.autorun = function (f) {
  * @locus Client
  */
 Blaze.TemplateInstance.prototype.subscribe = function (/* arguments */) {
-  var subHandle = this.view.subscribe(arguments);
+  var subHandle = this.view.subscribe.apply(this.view, arguments);
 
   this._subscriptionHandles.set(
     this._subscriptionHandles.get().concat([subHandle]));

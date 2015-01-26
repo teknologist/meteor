@@ -3067,3 +3067,26 @@ Tinytest.add("spacebars-tests - template_tests - inclusion with data remove (#31
   test.isTrue(parentView.isDestroyed);
   test.equal(canonicalizeHtml(div.innerHTML), "<span></span>");
 });
+
+testAsyncMulti("spacebars-tests - template_tests - template-level subscriptions", [
+  function (test, expect) {
+    var tmpl = Template.spacebars_template_test_template_level_subscriptions;
+
+    var checkHTML = expect(function () {
+      test.equal(canonicalizeHtml(div.innerHTML), "ready! true");
+    });
+
+    var subscribeCallback = expect(function () {
+      Tracker.afterFlush(checkHTML);
+    });
+
+    tmpl.onCreated(function () {
+      this.subscribe("items", subscribeCallback);
+    });
+
+    var div = renderToDiv(tmpl);
+
+    // To start, there is no content because the template isn't ready
+    test.equal(canonicalizeHtml(div.innerHTML), "");
+  }
+]);
