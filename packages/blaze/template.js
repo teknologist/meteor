@@ -39,6 +39,8 @@ Blaze.Template = function (viewName, renderFunction) {
     rendered: [],
     destroyed: []
   };
+
+  this._subscriptionHandles = new ReactiveVar([]);
 };
 var Template = Blaze.Template;
 
@@ -306,6 +308,36 @@ Blaze.TemplateInstance.prototype.find = function (selector) {
  */
 Blaze.TemplateInstance.prototype.autorun = function (f) {
   return this.view.autorun(f);
+};
+
+/**
+ * @summary A version of [Meteor.subscribe](#meteor_subscribe) that is stopped
+ * when the template is destroyed.
+ * @return {SubscriptionHandle} The subscription handle to the newly made
+ * subscription. Call `handle.stop()` to manually stop the subscription, or
+ * `handle.ready()` to find out if this particular subscription has loaded all
+ * of its inital data.
+ * @locus Client
+ */
+Blaze.TemplateInstance.prototype.subscribe = function (/* arguments */) {
+  var subHandle = this.view.subscribe(arguments);
+
+  this._subscriptionHandles.set(
+    this._subscriptionHandles.get().concat([subHandle]));
+
+  return subHandle;
+};
+
+/**
+ * @summary A reactive function that returns true when all of the subscriptions
+ * called with [this.subscribe](#TemplateInstance-subscribe) are @ready.
+ * @return {Boolean} True if all subscriptions on this template instance are
+ * ready.
+ */
+Blaze.TemplateInstance.prototype.ready = function () {
+  return _.all(this._subscriptionHandles.get(), function (handle) {
+    return handle.ready();
+  });
 };
 
 /**

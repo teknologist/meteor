@@ -184,6 +184,34 @@ Blaze.View.prototype.autorun = function (f, _inViewScope) {
   return c;
 };
 
+/**
+ * Just like Blaze.View#autorun, but with Meteor.subscribe instead of
+ * Tracker.autorun. Stop the subscription when the view is destroyed.
+ * @return {SubscriptionHandle} A handle to the subscription so that you can
+ * see if it is ready, or stop it manually
+ */
+Blaze.View.prototype.subscribe = function (/* arguments */) {
+  var self = this;
+
+  if (! self.isCreated) {
+    throw new Error("View#subscribe must be called from the created callback at the earliest");
+  }
+  if (this._isInRender) {
+    throw new Error("Can't call View#subscribe from inside render(); try calling it from the created or rendered callback");
+  }
+  if (Tracker.active) {
+    throw new Error("Can't call View#subscribe from a Tracker Computation; try calling it from the created or rendered callback");
+  }
+
+  var subHandle = Meteor.subscribe.apply(Meteor, arguments);
+
+  self.onViewDestroyed(function () {
+    subHandle.stop();
+  });
+
+  return subHandle;
+};
+
 Blaze.View.prototype.firstNode = function () {
   if (! this._isAttached)
     throw new Error("View must be attached before accessing its DOM");
