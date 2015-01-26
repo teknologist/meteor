@@ -153,6 +153,41 @@ when the template is destroyed.
 
 Alias for `template.view.autorun`.
 
+{{> autoApiBox "Blaze.TemplateInstance#subscribe"}}
+
+You can use `this.subscribe` from an [`onCreated`](#template_onCreated) callback
+to specify which data publications this template depends on. The subscription is
+automatically stopped when the template is destroyed.
+
+There is a complementary function `Template.instance().ready()` which returns
+true when all of the subscriptions called with `this.subscribe` are ready.
+
+Inside the template's HTML, you can use the built-in helper `Template.ready`,
+which is an easy pattern for showing loading indicators in your templates when
+they depend on data loaded from subscriptions.
+
+Example:
+
+```js
+Template.notifications.onCreated(function () {
+  // Use this.subscribe inside onCreated callback
+  this.subscibe("notifications");
+});
+```
+
+```html
+<template name="notifications">
+  {{dstache}}#if Template.ready}}
+    <!-- This is displayed when all data is ready. -->
+    {{dstache}}#each notifications}}
+      {{dstache}}> notification}}
+    {{dstache}}/each}}
+  {{dstache}}else}}
+    Loading...
+  {{dstache}}/if}}
+</template>
+```
+
 {{> autoApiBox "Blaze.TemplateInstance#view"}}
 
 {{> autoApiBox "Template.registerHelper"}}
