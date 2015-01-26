@@ -3071,20 +3071,32 @@ Tinytest.add("spacebars-tests - template_tests - inclusion with data remove (#31
 testAsyncMulti("spacebars-tests - template_tests - template-level subscriptions", [
   function (test, expect) {
     var tmpl = Template.spacebars_template_test_template_level_subscriptions;
+    var tmplInstance;
 
-    var checkHTML = expect(function () {
+    // Make sure the subscription stops when the template is destroyed
+    var stopCallback = expect();
+
+    // Make sure the HTML is what we expect when the subscription is ready
+    var checkHTMLThenRemove = expect(function () {
       test.equal(canonicalizeHtml(div.innerHTML), "ready! true");
+
+      // This will call the template's destroyed callback
+      Blaze.remove(tmplInstance.view);
     });
 
+    // Manually check the subscribe ready callback to make sure the template is
+    // doing the right thing
     var subscribeCallback = expect(function () {
-      Tracker.afterFlush(checkHTML);
+      Tracker.afterFlush(checkHTMLThenRemove);
     });
 
     tmpl.onCreated(function () {
-      this.subscribe("items", subscribeCallback);
+      subHandle = this.subscribe("items", subscribeCallback);
+      subHandle.stop = stopCallback;
+      tmplInstance = this;
     });
 
-    var div = renderToDiv(tmpl);
+    div = renderToDiv(tmpl);
 
     // To start, there is no content because the template isn't ready
     test.equal(canonicalizeHtml(div.innerHTML), "");
