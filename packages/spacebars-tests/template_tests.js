@@ -3073,29 +3073,50 @@ testAsyncMulti("spacebars-tests - template_tests - template-level subscriptions"
     var tmpl = Template.spacebars_template_test_template_level_subscriptions;
     var tmplInstance;
 
-    // Make sure the subscription stops when the template is destroyed
+    // Make sure the subscriptions stop when the template is destroyed
     var stopCallback = expect();
+    var stopCallback2 = expect();
 
-    // Make sure the HTML is what we expect when the subscription is ready
-    var checkHTMLThenRemove = expect(function () {
+    // Make sure the HTML is what we expect when one subscription is ready
+    var checkOneReady = expect(function () {
+      test.equal(canonicalizeHtml(div.innerHTML), "");
+    });
+
+    // Make sure the HTML is what we expect when both subscriptions are ready
+    var checkBothReady = expect(function () {
       test.equal(canonicalizeHtml(div.innerHTML), "ready! true");
 
       // This will call the template's destroyed callback
       Blaze.remove(tmplInstance.view);
     });
 
-    // Manually check the subscribe ready callback to make sure the template is
+    var subscriptionsFinished = 0;
+
+    // Manually use the subscribe ready callback to make sure the template is
     // doing the right thing
     var subscribeCallback = expect(function () {
-      Tracker.afterFlush(checkHTMLThenRemove);
+      subscriptionsFinished++;
+
+      if (subscriptionsFinished === 1) {
+        Tracker.afterFlush(checkOneReady);
+      }
+
+      if (subscriptionsFinished === 2) {
+        Tracker.afterFlush(checkBothReady);
+      }
     });
 
     tmpl.onCreated(function () {
       subHandle = this.subscribe("items", subscribeCallback);
+      subHandle2 = this.subscribe("items", 50, subscribeCallback);
+
       subHandle.stop = stopCallback;
+      subHandle2.stop = stopCallback2;
+
       tmplInstance = this;
     });
 
+    // Insertion point
     div = renderToDiv(tmpl);
 
     // To start, there is no content because the template isn't ready
