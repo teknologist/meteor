@@ -478,7 +478,8 @@ _.extend(Connection.prototype, {
       if (typeof lastParam === "function") {
         callbacks.onReady = params.pop();
       } else if (lastParam && (typeof lastParam.onReady === "function" ||
-                               typeof lastParam.onError === "function")) {
+                               typeof lastParam.onError === "function" ||
+                               typeof lastParam.onStopped === "function")) {
         callbacks = params.pop();
       }
     }
@@ -520,10 +521,15 @@ _.extend(Connection.prototype, {
         if (!existing.ready)
           existing.readyCallback = callbacks.onReady;
       }
+
       if (callbacks.onError) {
         // Replace existing callback if any, so that errors aren't
         // double-reported.
         existing.errorCallback = callbacks.onError;
+      }
+
+      if (callbacks.onStopped) {
+        existing.stoppedCallback = callbacks.onStopped;
       }
     } else {
       // New sub! Generate an id, save it locally, and send message.
@@ -545,6 +551,10 @@ _.extend(Connection.prototype, {
         stop: function() {
           this.connection._send({msg: 'unsub', id: id});
           this.remove();
+
+          if (callbacks.onStopped) {
+            callbacks.onStopped();
+          }
         }
       };
       self._send({msg: 'sub', id: id, name: name, params: params});
