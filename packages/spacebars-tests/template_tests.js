@@ -3067,3 +3067,35 @@ Tinytest.add("spacebars-tests - template_tests - inclusion with data remove (#31
   test.isTrue(parentView.isDestroyed);
   test.equal(canonicalizeHtml(div.innerHTML), "<span></span>");
 });
+
+Tinytest.add("spacebars-tests - template_tests - old #each sets data context", function (test) {
+  var tmpl = Template.spacebars_template_test_old_each_data_context;
+  tmpl.helpers({
+    items: [{text:"a"}, {text:"b"}]
+  });
+
+  var div = document.createElement("DIV");
+  var theWith = Blaze.render(tmpl, div);
+  test.equal(canonicalizeHtml(div.innerHTML), '<div>a</div><div>b</div>');
+  var view = Blaze.getView(div.querySelector('div'));
+  Blaze.remove(view);
+});
+
+Tinytest.add("spacebars-tests - template_tests - new #each extends data context", function (test) {
+  var tmpl = Template.spacebars_template_test_new_each_data_context;
+  tmpl.helpers({
+    dataContext: function () {
+      return {
+        items: [{text:"a"}, {text:"b"}],
+        toplevel: "XYZ"
+      };
+    }
+  });
+
+  var div = document.createElement("DIV");
+  var theWith = Blaze.render(tmpl, div);
+  test.equal(canonicalizeHtml(div.innerHTML), '<div>a -- XYZ</div><div>b -- XYZ</div>');
+  var view = Blaze.getView(div.querySelector('div'));
+  Blaze.remove(view);
+});
+
